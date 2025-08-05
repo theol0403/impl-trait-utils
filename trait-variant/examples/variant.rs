@@ -22,6 +22,7 @@ pub trait LocalIntFactory {
     fn call(&self) -> u32;
     fn another_async(&self, input: Result<(), &str>) -> Self::MyFut<'_>;
     async fn defaulted(&self, x: u32) -> i32 {
+        let _t = get_global_var().await;
         self.make(x, "10").await
     }
     async fn defaulted_mut(&mut self) -> i32 {
@@ -74,3 +75,7 @@ where
 }
 
 fn main() {}
+
+async fn get_global_var() -> &'static i32 {
+    todo!()
+}

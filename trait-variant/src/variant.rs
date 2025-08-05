@@ -11,7 +11,13 @@ use std::iter;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{
-    parse::{Parse, ParseStream}, parse_macro_input, parse_quote, punctuated::Punctuated, token::Plus, Error, FnArg, GenericParam, Ident, ItemTrait, Pat, PatIdent, PatType, Receiver, Result, ReturnType, Signature, Token, TraitBound, TraitItem, TraitItemConst, TraitItemFn, TraitItemType, Type, TypeGenerics, TypeImplTrait, TypeParam, TypeParamBound, TypeReference, WhereClause
+    parse::{Parse, ParseStream},
+    parse_macro_input, parse_quote,
+    punctuated::Punctuated,
+    token::Plus,
+    Error, FnArg, GenericParam, Ident, ItemTrait, Pat, PatIdent, PatType, Receiver, Result,
+    ReturnType, Signature, Token, TraitBound, TraitItem, TraitItemConst, TraitItemFn,
+    TraitItemType, Type, TypeGenerics, TypeImplTrait, TypeParam, TypeParamBound, WhereClause,
 };
 
 struct Attrs {
@@ -303,37 +309,7 @@ fn blanket_impl_item(
 }
 
 fn add_receiver_bounds(sig: &mut Signature) {
-    let Some(FnArg::Receiver(Receiver { ty, reference, .. })) = sig.inputs.first_mut() else {
-        return;
-    };
-    let Type::Reference(
-        recv_ty @ TypeReference {
-            mutability: None, ..
-        },
-    ) = &mut **ty
-    else {
-        return;
-    };
-    let Some((_and, lt)) = reference else {
-        return;
-    };
-
-    let lifetime = syn::Lifetime {
-        apostrophe: Span::mixed_site(),
-        ident: Ident::new("the_self_lt", Span::mixed_site()),
-    };
-    sig.generics.params.insert(
-        0,
-        syn::GenericParam::Lifetime(syn::LifetimeParam {
-            lifetime: lifetime.clone(),
-            colon_token: None,
-            bounds: Default::default(),
-            attrs: Default::default(),
-        }),
-    );
-    recv_ty.lifetime = Some(lifetime.clone());
-    *lt = Some(lifetime);
-    let predicate = parse_quote! { #recv_ty: Send };
+    let predicate = parse_quote! { for<'a> &'a Self: Send };
 
     if let Some(wh) = &mut sig.generics.where_clause {
         wh.predicates.push(predicate);
