@@ -289,10 +289,28 @@ fn blanket_impl_item(
             } else {
                 quote! {}
             };
-
+            let generic_args = if sig.generics.params.is_empty() {
+                quote! {}
+            } else {
+                let type_params: Vec<_> = sig
+                    .generics
+                    .params
+                    .iter()
+                    .filter_map(|p| match p {
+                        syn::GenericParam::Type(ty) => Some(ty.ident.clone()),
+                        syn::GenericParam::Const(c) => Some(c.ident.clone()),
+                        _ => None,
+                    })
+                    .collect();
+                if type_params.is_empty() {
+                    quote! {}
+                } else {
+                    quote! { ::<#(#type_params),*> }
+                }
+            };
             quote! {
                 #sig {
-                    <Self as #variant #trait_ty_generics>::#ident(#(#args),*)#maybe_await
+                    <Self as #variant #trait_ty_generics>::#ident #generic_args (#(#args),*)#maybe_await
                 }
             }
         }

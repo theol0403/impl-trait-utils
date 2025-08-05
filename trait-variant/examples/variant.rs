@@ -37,6 +37,9 @@ pub trait LocalIntFactory {
     {
         self.make(10, "10").await
     }
+    async fn associated_type<T: MyTrait>(&self, value: T::AssociatedType) -> T::AssociatedType {
+        value
+    }
 }
 
 #[allow(dead_code)]
@@ -78,4 +81,8 @@ fn main() {}
 
 async fn get_global_var() -> &'static i32 {
     todo!()
+}
+
+pub trait MyTrait: Send {
+    type AssociatedType: Send;
 }
